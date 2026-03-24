@@ -11,7 +11,7 @@
         </div>
         <div>
             <p class="text-sm text-slate-500 font-medium">Kendaraan Sedang Parkir</p>
-            <h3 class="text-3xl font-bold text-slate-800">{{ $activeParkings }} <span class="text-sm font-normal text-slate-400">unit</span></h3>
+            <h3 class="text-3xl font-bold text-slate-800">{{ $activeTickets }} <span class="text-sm font-normal text-slate-400">unit</span></h3>
         </div>
     </div>
 
@@ -48,10 +48,10 @@
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-bold text-slate-800">Selesai Terakhir</h3>
-            <a href="{{ route('admin.transactions') }}" class="text-sm text-blue-600 hover:underline font-medium">Lihat Semua</a>
+            <a href="{{ route('admin.reports') }}" class="text-sm text-blue-600 hover:underline font-medium">Lihat Semua</a>
         </div>
         
-        <div class="flex-1 overflow-hidden">
+        <div class="flex-1">
             @if(isset($recentTransactions) && $recentTransactions->count() > 0)
                 <div class="space-y-4">
                     @foreach($recentTransactions as $trx)
@@ -62,7 +62,9 @@
                                 </div>
                                 <div>
                                     <p class="font-bold text-slate-800 text-sm tracking-wide">{{ $trx->plate_number }}</p>
-                                    <p class="text-xs text-slate-500">{{ \Carbon\Carbon::parse($trx->exit_time)->format('H:i') }} WIB</p>
+                                    <p class="text-xs text-slate-500">
+                                        {{ $trx->exit_time ? \Carbon\Carbon::parse($trx->exit_time)->format('H:i') : '-' }} WIB
+                                    </p>
                                 </div>
                             </div>
                             <div class="text-right">
@@ -73,7 +75,7 @@
                     @endforeach
                 </div>
             @else
-                <div class="h-full flex flex-col items-center justify-center text-slate-400 space-y-2">
+                <div class="h-full py-10 flex flex-col items-center justify-center text-slate-400 space-y-2">
                     <span class="text-4xl">📭</span>
                     <p class="text-sm">Belum ada transaksi selesai.</p>
                 </div>
@@ -82,20 +84,27 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('revenueChart').getContext('2d');
+        
+        // Membuat efek gradient pada chart
         const gradient = ctx.createLinearGradient(0, 0, 0, 300);
         gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
         gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
+        // Mengambil data dinamis dari Laravel Controller
+        const labels = @json($chartLabels);
+        const dataUang = @json($chartData);
+
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+                labels: labels,
                 datasets: [{
                     label: 'Pendapatan (Rp)',
-                    data: [120000, 190000, 150000, 220000, 180000, 350000, 420000],
+                    data: dataUang,
                     borderColor: '#3b82f6',
                     backgroundColor: gradient,
                     borderWidth: 3,
@@ -110,13 +119,24 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Pendapatan: Rp ' + context.raw.toLocaleString('id-ID');
+                            }
+                        }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         grid: { color: '#f1f5f9', drawBorder: false },
                         ticks: {
-                            callback: function(value) { return 'Rp ' + value.toLocaleString('id-ID'); }
+                            callback: function(value) { 
+                                return 'Rp ' + value.toLocaleString('id-ID'); 
+                            }
                         }
                     },
                     x: { grid: { display: false, drawBorder: false } }

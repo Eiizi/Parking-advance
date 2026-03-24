@@ -38,5 +38,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/pegawai/tambah', [AdminController::class, 'createEmployee'])->name('admin.employees.create');
     Route::post('/admin/pegawai', [AdminController::class, 'storeEmployee'])->name('admin.employees.store');
     Route::delete('/admin/pegawai/{id}', [AdminController::class, 'destroyEmployee'])->name('admin.employees.destroy');
+    Route::get('/admin/laporan/export', [AdminController::class, 'exportExcel'])->name('admin.laporan.export');
 
 });
